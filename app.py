@@ -13,9 +13,9 @@ import os
 import secrets
 flask_secret = os.environ.get('FLASK_SECRET')
 if not flask_secret:
-    # Generate a secure secret key for this session
-    flask_secret = secrets.token_hex(32)
-    print("Warning: FLASK_SECRET not set, using generated key. Set FLASK_SECRET environment variable for production!")
+    # Use a consistent key for development to maintain sessions across restarts
+    flask_secret = 'dev_key_video_tournament_2025_do_not_use_in_production'
+    print("Warning: FLASK_SECRET not set, using development key. Set FLASK_SECRET environment variable for production!")
 app.config['SECRET_KEY'] = flask_secret
 
 # Security configuration
@@ -262,8 +262,9 @@ def payment_success():
             checkout_session = stripe.checkout.Session.retrieve(session_id)
             
             # Verify the session belongs to the current user and payment is complete
+            metadata = checkout_session.metadata or {}
             if (checkout_session.payment_status == 'paid' and 
-                checkout_session.metadata.get('user_id') == str(session['user_id'])):
+                metadata.get('user_id') == str(session['user_id'])):
                 
                 # Mark user as paid
                 conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'tournament.db'))
@@ -281,6 +282,19 @@ def payment_success():
     
     flash('Payment verification failed. Please contact support.')
     return redirect(url_for('payment'))
+
+# Demo route for testing - bypass payment
+@app.route('/demo-activate')
+@login_required  
+def demo_activate():
+    conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'tournament.db'))
+    c = conn.cursor()
+    c.execute('UPDATE users SET is_paid = 1 WHERE id = ?', (session['user_id'],))
+    conn.commit()
+    conn.close()
+    
+    flash('Demo mode: Account activated! You can now access all features.')
+    return redirect(url_for('dashboard'))
 
 @app.route('/dashboard')
 @login_required
