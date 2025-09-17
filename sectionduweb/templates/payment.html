@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Payment - Video Tournament{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-success text-white text-center">
+                    <h3 class="mb-0"><i class="fas fa-credit-card"></i> Complete Your Registration</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-success mb-4">
+                        <div class="row">
+                            <div class="col-12">
+                                <h5><i class="fas fa-trophy"></i> Tournament Access - $25</h5>
+                                <hr class="my-2">
+                                <p class="mb-2"><strong>Your registration includes:</strong></p>
+                                <ul class="mb-0">
+                                    <li><i class="fas fa-check text-success"></i> Upload unlimited videos</li>
+                                    <li><i class="fas fa-check text-success"></i> Vote on all participant videos</li>
+                                    <li><i class="fas fa-check text-success"></i> Comment and interact with videos</li>
+                                    <li><i class="fas fa-check text-success"></i> Access to leaderboards and rankings</li>
+                                    <li><i class="fas fa-check text-success"></i> Compete for the top position</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Demo payment section -->
+                    <div class="mb-4">
+                        <h5 class="text-center mb-3">Complete Payment</h5>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Demo Mode:</strong> This is a demonstration. In production, integrate with Stripe for real payments.
+                        </div>
+                        
+                        <form action="{{ url_for('process_payment') }}" method="POST" class="text-center">
+                            <button type="submit" class="btn btn-success btn-lg w-100 mb-3">
+                                <i class="fas fa-lock"></i> Complete Payment - $25
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt"></i> Secure payment processing
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+---

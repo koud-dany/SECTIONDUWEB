@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard - Video Tournament{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center mb-5">
+                <h2><i class="fas fa-trophy text-warning"></i> Competition Leaderboard</h2>
+                <p class="lead text-muted">See who's leading the video tournament</p>
+            </div>
+        </div>
+    </div>
+    
+    {% if videos %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-primary text-white">
+                                <tr>
+                                    <th class="text-center" style="width: 80px;">Rank</th>
+                                    <th style="width: 60px;"></th>
+                                    <th>Video</th>
+                                    <th>Creator</th>
+                                    <th class="text-center">Rating</th>
+                                    <th class="text-center">Votes</th>
+                                    <th class="text-center">Uploaded</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for video in videos %}
+                                <tr {% if video[7] == 1 %}class="table-warning"{% elif video[7] == 2 %}class="table-light"{% elif video[7] == 3 %}class="table-info"{% endif %}>
+                                    <td class="text-center align-middle">
+                                        {% if video[7] <= 3 %}
+                                        <span class="badge bg-{% if video[7] == 1 %}warning{% elif video[7] == 2 %}secondary{% else %}info{% endif %} fs-6">
+                                            {% if video[7] == 1 %}🥇{% elif video[7] == 2 %}🥈{% elif video[7] == 3 %}🥉{% endif %}
+                                            #{{ video[7] }}
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-light text-dark">#{{ video[7] }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="align-middle">
+                                        <div style="width: 50px; height: 35px; overflow: hidden; border-radius: 5px;">
+                                            <video class="w-100 h-100" style="object-fit: cover;" muted>
+                                                <source src="{{ url_for('static', filename='uploads/' + video[2]) }}" type="video/mp4">
+                                            </video>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">
+                                        <strong>{{ video[1] }}</strong>
+                                    </td>
+                                    <td class="align-middle">
+                                        <i class="fas fa-user text-muted"></i> {{ video[5] }}
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <div class="rating-stars">
+                                            {% for i in range(5) %}
+                                            {% if i < video[4]|round %}
+                                            <i class="fas fa-star"></i>
+                                            {% else %}
+                                            <i class="far fa-star"></i>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        <strong>{{ "%.1f"|format(video[4]) }}</strong>
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <span class="badge bg-primary">{{ video[3] }}</span>
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <small class="text-muted">{{ video[6][:10] }}</small>
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <a href="{{ url_for('video_detail', video_id=video[0]) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-play"></i> Watch
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-trophy fa-5x text-muted mb-4"></i>
+        <h3 class="text-muted">No videos in competition yet</h3>
+        <p class="text-muted">Upload a video to start the leaderboard!</p>
+        <a href="{{ url_for('upload_video') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus"></i> Upload First Video
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+</div>
+{% endblock %}
+
+---

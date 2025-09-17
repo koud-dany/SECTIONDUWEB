@@ -1,0 +1,10 @@
+*.pyc
+__pycache__/
+.env
+.venv/
+venv/
+tournament.db
+static/uploads/*
+static/thumbnails/*
+!static/uploads/.gitkeep
+!static/thumbnails/.gitkeep
