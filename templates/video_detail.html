@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}{{ video[1] }} - Video Tournament{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Video Player Section -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body p-0">
+                    <div style="position: relative; height: 450px; overflow: hidden; border-radius: 15px;">
+                        <video class="w-100 h-100" style="object-fit: cover;" controls>
+                            <source src="{{ url_for('static', filename='uploads/' + video[3]) }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <h3>{{ video[1] }}</h3>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="text-muted">
+                                <i class="fas fa-user"></i> {{ video[6] }}
+                            </span>
+                            <span class="text-muted ms-3">
+                                <i class="fas fa-calendar"></i> {{ video[7][:10] }}
+                            </span>
+                        </div>
+                        <div class="rating-stars">
+                            {% for i in range(5) %}
+                            {% if i < video[5]|round %}
+                            <i class="fas fa-star"></i>
+                            {% else %}
+                            <i class="far fa-star"></i>
+                            {% endif %}
+                            {% endfor %}
+                            <span class="ms-2 fw-bold">{{ "%.1f"|format(video[5]) }}</span>
+                            <small class="text-muted ms-2">({{ video[4] }} votes)</small>
+                        </div>
+                    </div>
+                    
+                    {% if video[2] %}
+                    <div class="mb-4">
+                        <h6>Description:</h6>
+                        <p class="text-muted">{{ video[2] }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Voting and Comments Section -->
+        <div class="col-lg-4">
+            <!-- Voting Section -->
+            {% if video[8] != session.user_id %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-star"></i> Rate This Video</h6>
+                </div>
+                <div class="card-body">
+                    {% if user_vote %}
+                    <div class="alert alert-success text-center">
+                        <i class="fas fa-check-circle"></i> You rated this video: 
+                        <strong>{{ user_vote }}/5 stars</strong>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="POST" action="{{ url_for('vote') }}">
+                        <input type="hidden" name="video_id" value="{{ video[0] }}">
+                        <div class="text-center mb-3">
+                            <div class="btn-group" role="group">
+                                {% for i in range(1, 6) %}
+                                <input type="radio" class="btn-check" name="rating" value="{{ i }}" id="rating{{ i }}" 
+                                       {% if user_vote == i %}checked{% endif %} required>
+                                <label class="btn btn-outline-warning" for="rating{{ i }}">
+                                    <i class="fas fa-star"></i> {{ i }}
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-thumbs-up"></i> 
+                            {% if user_vote %}Update Vote{% else %}Submit Vote{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <i class="fas fa-info-circle text-muted fa-2x mb-2"></i>
+                    <p class="text-muted mb-0">You cannot vote on your own video</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Comments Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-comments"></i> Comments ({{ comments|length }})</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Add Comment Form -->
+                    <form method="POST" action="{{ url_for('add_comment') }}" class="mb-3">
+                        <input type="hidden" name="video_id" value="{{ video[0] }}">
+                        <div class="mb-2">
+                            <textarea class="form-control" name="comment" rows="3" 
+                                      placeholder="Share your thoughts about this video..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="fas fa-comment"></i> Add Comment
+                        </button>
+                    </form>
+                    
+                    <hr>
+                    
+                    <!-- Comments List -->
+                    {% if comments %}
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        {% for comment in comments %}
+                        <div class="mb-3 pb-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <strong class="text-primary">{{ comment[2] }}</strong>
+                                <small class="text-muted">{{ comment[1][:16] }}</small>
+                            </div>
+                            <p class="mb-0 small">{{ comment[0] }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-comment fa-2x mb-2"></i>
+                        <p class="mb-0">No comments yet. Be the first to comment!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+---
