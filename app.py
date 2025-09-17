@@ -298,7 +298,6 @@ def demo_activate():
 
 @app.route('/dashboard')
 @login_required
-@payment_required
 def dashboard():
     conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'tournament.db'))
     c = conn.cursor()
@@ -313,7 +312,6 @@ def dashboard():
 
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
-@payment_required
 def upload_video():
     if request.method == 'POST':
         title = request.form['title']
@@ -352,7 +350,6 @@ def upload_video():
 
 @app.route('/videos')
 @login_required
-@payment_required
 def videos():
     conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'tournament.db'))
     c = conn.cursor()
@@ -369,7 +366,6 @@ def videos():
 
 @app.route('/video/<int:video_id>')
 @login_required
-@payment_required
 def video_detail(video_id):
     conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'tournament.db'))
     c = conn.cursor()
@@ -405,7 +401,6 @@ def video_detail(video_id):
 
 @app.route('/vote', methods=['POST'])
 @login_required
-@payment_required
 def vote():
     video_id = int(request.form['video_id'])
     rating = int(request.form['rating'])
@@ -449,7 +444,6 @@ def vote():
 
 @app.route('/comment', methods=['POST'])
 @login_required
-@payment_required
 def add_comment():
     video_id = int(request.form['video_id'])
     comment_text = request.form['comment'].strip()
@@ -470,7 +464,6 @@ def add_comment():
 
 @app.route('/leaderboard')
 @login_required
-@payment_required
 def leaderboard():
     conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'tournament.db'))
     c = conn.cursor()
