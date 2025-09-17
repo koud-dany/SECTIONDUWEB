@@ -1,3 +1,7 @@
 Flask>=2.0
 stripe>=5.0
 Werkzeug>=2.0
+Flask
+gunicorn
+stripe
+Werkzeug
