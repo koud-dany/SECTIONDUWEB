@@ -28,15 +28,15 @@
                         </div>
                     </div>
                     
-                    <!-- Demo payment section -->
+                    <!-- Stripe payment section -->
                     <div class="mb-4">
                         <h5 class="text-center mb-3">Complete Payment</h5>
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <strong>Demo Mode:</strong> This is a demonstration. In production, integrate with Stripe for real payments.
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Secure Payment:</strong> You'll be redirected to Stripe's secure checkout page to complete your payment.
                         </div>
                         
-                        <form action="{{ url_for('process_payment') }}" method="POST" class="text-center">
+                        <form action="{{ url_for('create_checkout_session') }}" method="POST" class="text-center">
                             <button type="submit" class="btn btn-success btn-lg w-100 mb-3">
                                 <i class="fas fa-lock"></i> Complete Payment - $25
                             </button>

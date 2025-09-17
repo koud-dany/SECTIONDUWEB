@@ -21,13 +21,22 @@ app.config['SECRET_KEY'] = flask_secret
 # Security configuration
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-# Note: SESSION_COOKIE_SECURE requires HTTPS, disabled for development
+# Enable secure cookies in production (when running with HTTPS)
+if os.environ.get('REPLIT_DEPLOYMENT') or os.environ.get('HTTPS', '').lower() == 'true':
+    app.config['SESSION_COOKIE_SECURE'] = True
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 
 # Stripe configuration from environment variables
-stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', 'your-secret-key-here')
-STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', 'your-publishable-key-here')
+stripe_secret = os.environ.get('STRIPE_SECRET_KEY')
+if not stripe_secret:
+    raise ValueError("STRIPE_SECRET_KEY environment variable must be set for payment processing!")
+stripe.api_key = stripe_secret
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
+
+# Get domain for Stripe redirects
+repl_domains = os.environ.get('REPLIT_DOMAINS', 'localhost:5000')
+YOUR_DOMAIN = os.environ.get('REPLIT_DEV_DOMAIN') if os.environ.get('REPLIT_DEPLOYMENT') else repl_domains.split(',')[0]
 
 # Ensure required directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -214,23 +223,64 @@ def logout():
 def payment():
     return render_template('payment.html', stripe_publishable_key=STRIPE_PUBLISHABLE_KEY)
 
-@app.route('/process-payment', methods=['POST'])
+@app.route('/create-checkout-session', methods=['POST'])
 @login_required
-def process_payment():
-    # SECURITY WARNING: This is a demo/development payment processor
-    # In production, this must be replaced with proper Stripe webhook verification
-    # Current implementation is insecure and bypasses payment verification
+def create_checkout_session():
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'usd',
+                        'product_data': {
+                            'name': 'Video Tournament Entry Fee',
+                            'description': 'Entry fee for participating in the video tournament',
+                        },
+                        'unit_amount': 2500,  # $25 in cents
+                    },
+                    'quantity': 1,
+                },
+            ],
+            mode='payment',
+            success_url=url_for('payment_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=url_for('payment', _external=True),
+            metadata={'user_id': str(session['user_id'])},
+        )
+    except Exception as e:
+        flash(f'Error creating payment session: {str(e)}')
+        return redirect(url_for('payment'))
     
-    # For demo purposes only - mark user as paid
-    # TODO: Implement proper Stripe payment flow with webhook verification
-    conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'tournament.db'))
-    c = conn.cursor()
-    c.execute('UPDATE users SET is_paid = 1 WHERE id = ?', (session['user_id'],))
-    conn.commit()
-    conn.close()
+    return redirect(checkout_session.url or url_for('payment'), code=303)
+
+@app.route('/payment-success')
+@login_required
+def payment_success():
+    session_id = request.args.get('session_id')
+    if session_id:
+        try:
+            # Verify the payment session
+            checkout_session = stripe.checkout.Session.retrieve(session_id)
+            
+            # Verify the session belongs to the current user and payment is complete
+            if (checkout_session.payment_status == 'paid' and 
+                checkout_session.metadata.get('user_id') == str(session['user_id'])):
+                
+                # Mark user as paid
+                conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'tournament.db'))
+                c = conn.cursor()
+                c.execute('UPDATE users SET is_paid = 1 WHERE id = ?', (session['user_id'],))
+                conn.commit()
+                conn.close()
+                
+                flash('Payment successful! You can now participate in the tournament.')
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Payment verification failed - session mismatch or payment incomplete.')
+        except Exception as e:
+            flash(f'Error verifying payment: {str(e)}')
     
-    flash('Demo payment processed! Note: This is a development version with mock payment processing.')
-    return redirect(url_for('dashboard'))
+    flash('Payment verification failed. Please contact support.')
+    return redirect(url_for('payment'))
 
 @app.route('/dashboard')
 @login_required
