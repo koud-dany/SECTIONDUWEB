@@ -224,7 +224,7 @@ def process_payment():
         flash('Payment successful! You can now participate in the tournament.')
         return redirect(url_for('dashboard'))
         
-    except stripe.error.StripeError as e:
+    except Exception as e:
         flash(f'Payment failed: {str(e)}')
         return redirect(url_for('payment'))
 
@@ -260,7 +260,7 @@ def upload_video():
             flash('No video file selected.')
             return redirect(request.url)
         
-        if file and allowed_file(file.filename):
+        if file and file.filename and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             # Add timestamp to avoid conflicts
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
@@ -420,4 +420,6 @@ def leaderboard():
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    # Configure for Replit environment - bind to 0.0.0.0:5000
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
