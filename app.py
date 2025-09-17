@@ -9,7 +9,19 @@ from functools import wraps
 
 app = Flask(__name__)
 import os
-app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET', 'change-me-to-a-random-secret')
+# Generate secure secret key if not provided
+import secrets
+flask_secret = os.environ.get('FLASK_SECRET')
+if not flask_secret:
+    # Generate a secure secret key for this session
+    flask_secret = secrets.token_hex(32)
+    print("Warning: FLASK_SECRET not set, using generated key. Set FLASK_SECRET environment variable for production!")
+app.config['SECRET_KEY'] = flask_secret
+
+# Security configuration
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+# Note: SESSION_COOKIE_SECURE requires HTTPS, disabled for development
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 
@@ -205,28 +217,20 @@ def payment():
 @app.route('/process-payment', methods=['POST'])
 @login_required
 def process_payment():
-    try:
-        # Create a payment intent for $25 (2500 cents)
-        intent = stripe.PaymentIntent.create(
-            amount=2500,  # $25 in cents
-            currency='usd',
-            metadata={'user_id': session['user_id']}
-        )
-        
-        # In a real app, you'd handle the payment confirmation webhook
-        # For demo purposes, we'll mark the user as paid immediately
-        conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'tournament.db'))
-        c = conn.cursor()
-        c.execute('UPDATE users SET is_paid = 1 WHERE id = ?', (session['user_id'],))
-        conn.commit()
-        conn.close()
-        
-        flash('Payment successful! You can now participate in the tournament.')
-        return redirect(url_for('dashboard'))
-        
-    except Exception as e:
-        flash(f'Payment failed: {str(e)}')
-        return redirect(url_for('payment'))
+    # SECURITY WARNING: This is a demo/development payment processor
+    # In production, this must be replaced with proper Stripe webhook verification
+    # Current implementation is insecure and bypasses payment verification
+    
+    # For demo purposes only - mark user as paid
+    # TODO: Implement proper Stripe payment flow with webhook verification
+    conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'tournament.db'))
+    c = conn.cursor()
+    c.execute('UPDATE users SET is_paid = 1 WHERE id = ?', (session['user_id'],))
+    conn.commit()
+    conn.close()
+    
+    flash('Demo payment processed! Note: This is a development version with mock payment processing.')
+    return redirect(url_for('dashboard'))
 
 @app.route('/dashboard')
 @login_required
@@ -422,4 +426,6 @@ if __name__ == '__main__':
     init_db()
     # Configure for Replit environment - bind to 0.0.0.0:5000
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # Only enable debug in development
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
